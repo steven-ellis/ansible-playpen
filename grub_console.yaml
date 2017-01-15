@@ -1,0 +1,61 @@
+# Ansible playbook to enable serial boot output under KVM
+# 
+# For Grub to support serial console for KVM we need to update 
+# /etc/default/grub with the following options
+# 
+# These enable GRUB itself to use the serial output
+#  GRUB_TERMINAL=serial
+#  GRUB_SERIAL_COMMAND="serial --speed=38400 --unit=0 --word=8 --parity=no --stop=1"
+#
+# This enables boot output to be displayed and a getty (on RHEL7 / Centos7)
+#  GRUB_CMDLINE_LINUX="<existing settings> console=tty0 console=ttyS0,38400n8"
+# 
+# Note use http://pythex.org/ to validate the regex
+# ?! doesn't work I needed to use ?<!
+# 
+
+---
+- hosts: all
+  vars:
+  remote_user: root
+  tasks:
+
+  - name: Enable Serial Console for Grub startup
+    lineinfile: dest=/etc/default/grub
+                backup=True
+                state=present
+                backrefs=yes
+                regexp='^GRUB_TERMINAL'
+                line='GRUB_TERMINAL="serial console"'
+    notify: update grub2
+
+  - name: Set Serial Console Settings for Grub startup
+    lineinfile: dest=/etc/default/grub
+                backup=True
+                state=present
+                line='GRUB_SERIAL_COMMAND="serial --speed=38400 --unit=0 --word=8 --parity=no --stop=1"'
+    notify: update grub2
+
+
+  - name: Enable verbose debugging
+    lineinfile: dest=/etc/default/grub
+                backup=True
+                backrefs=yes
+                state=present
+                regexp='^GRUB_CMDLINE_LINUX=\"(.*) rhgb quiet(.*)\"$'
+                line='GRUB_CMDLINE_LINUX="\1 \2"'
+    notify: update grub2
+
+  - name: Enable Serial Console in Grub
+    lineinfile: dest=/etc/default/grub
+                backup=True
+                backrefs=yes
+                state=present
+                regexp='^GRUB_CMDLINE_LINUX=\"(.*)(?<! console=tty0 console=ttyS0,38400n8)\"$'
+                line='GRUB_CMDLINE_LINUX="\1 console=tty0 console=ttyS0,38400n8"'
+    notify: update grub2
+
+
+  handlers:
+    - name: update grub2
+      command: grub2-mkconfig -o /boot/grub2/grub.cfg
