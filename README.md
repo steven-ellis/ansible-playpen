@@ -20,3 +20,17 @@ ansible-playbook -i hosts playbook.yaml
 This playbook enables Serial Console for Grub and Serial Terminal post boot for
 a RHEL / Centos / Fedora Libvirt VM Image
 
+### unsafe_httpd.yaml
+
+Recent versions of Apache don't allow hostnames to contain underscores.
+
+- https://bugzilla.redhat.com/show_bug.cgi?id=1410130
+
+This causes issues form some of my demo and sandbox environments.
+The playbook uploads ```config/unsafe.conf``` containing the option
+
+```
+HttpProtocolOptions Unsafe
+```
+
+and then reloads the Apache environment to enable the change.
