@@ -1,7 +1,7 @@
 ---
 # This playbook configures 
 
-- hosts: web
+- hosts: webservers
   remote_user: root
   tasks:
   - name: Install httpd and php
