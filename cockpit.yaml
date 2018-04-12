@@ -1,0 +1,31 @@
+# Install and enable Cockpit
+#  https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html-single/getting_started_with_cockpit/index
+
+---
+- hosts: all
+  vars:
+     cockpit_port: 9090
+  remote_user: root
+
+  tasks:
+
+  - name: Install cockpit and dependancies
+    yum:
+      name={{item}}
+      state=present
+      enablerepo=rhel-7-server-extras-rpms,rhel-7-server-optional-rpms
+    with_items :
+    - cockpit
+    - cockpit-dashboard
+
+  - name: Enable firewall TCP access on port 9090
+    firewalld: port={{item}}/tcp immediate=true permanent=true state=enabled
+    with_items :
+    - '{{cockpit_port}}'
+
+  - name: Enable Cockpit to be running as an on demand socket based service
+    systemd:
+      name: cockpit.socket
+      state: started
+      enabled: yes
+      masked: no
